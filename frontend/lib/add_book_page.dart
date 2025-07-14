@@ -1,93 +1,124 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:path/path.dart' as path;
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
 
 class AddBookPage extends StatefulWidget {
-  const AddBookPage({super.key});
-
   @override
-  State<AddBookPage> createState() => _AddBookPageState();
+  _AddBookPageState createState() => _AddBookPageState();
 }
 
 class _AddBookPageState extends State<AddBookPage> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _title = TextEditingController();
-  final TextEditingController _author = TextEditingController();
-  final TextEditingController _genre = TextEditingController();
-  final TextEditingController _year = TextEditingController();
+  final _title = TextEditingController();
+  final _author = TextEditingController();
+  final _genre = TextEditingController();
+  final _year = TextEditingController();
 
-  Future<void> _submitBook() async {
-    final book = {
-      'title': _title.text,
-      'author': _author.text,
-      'genre': _genre.text,
-      'publishedYear': int.parse(_year.text),
-    };
+  File? _imageFile;
+  Uint8List? _webImage;
+  String? _webImageName;
 
-    final response = await http.post(
-      Uri.parse('http://localhost:5000/api/books'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(book),
-    );
+  final picker = ImagePicker();
 
-    if (response.statusCode == 201) {
-      Navigator.pop(context);
-    } else {
-      throw Exception('Failed to add book');
+  Future<void> _pickImage() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      if (kIsWeb) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _webImage = bytes;
+          _webImageName = pickedFile.name;
+        });
+      } else {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+        });
+      }
     }
   }
 
-  @override
-  void dispose() {
-    _title.dispose();
-    _author.dispose();
-    _genre.dispose();
-    _year.dispose();
-    super.dispose();
+  Future<void> _submitBook() async {
+  final uri = Uri.parse('http://localhost:4000/api/books'); // Or http://10.0.2.2:4000 if on Android emulator
+
+  var request = http.MultipartRequest('POST', uri);
+
+  request.fields['title'] = _title.text;
+  request.fields['author'] = _author.text;
+  request.fields['genre'] = _genre.text;
+  request.fields['publishedYear'] = _year.text;
+
+  if (kIsWeb && _webImage != null && _webImageName != null) {
+    final mimeType = lookupMimeType(_webImageName!) ?? 'image/jpeg';
+    request.files.add(http.MultipartFile.fromBytes(
+      'image',
+      _webImage!,
+      filename: _webImageName!,
+      contentType: MediaType.parse(mimeType),
+    ));
+  } else if (_imageFile != null) {
+    final mimeType = lookupMimeType(_imageFile!.path) ?? 'image/jpeg';
+    request.files.add(await http.MultipartFile.fromPath(
+      'image',
+      _imageFile!.path,
+      contentType: MediaType.parse(mimeType),
+    ));
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please select an image")));
+    return;
   }
+
+  final response = await request.send();
+
+  if (response.statusCode == 201) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Book added successfully")));
+    Navigator.pop(context, true); // ✅ return true so HomePage refreshes
+  } else {
+    print('Error: ${response.statusCode}');
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add book")));
+  }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
+    final isImagePicked = kIsWeb ? _webImage != null : _imageFile != null;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Book')),
+      appBar: AppBar(title: Text("Add Book")),
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _title,
-                decoration: const InputDecoration(labelText: 'Title'),
-                validator: (value) => value!.isEmpty ? 'Enter title' : null,
-              ),
-              TextFormField(
-                controller: _author,
-                decoration: const InputDecoration(labelText: 'Author'),
-                validator: (value) => value!.isEmpty ? 'Enter author' : null,
-              ),
-              TextFormField(
-                controller: _genre,
-                decoration: const InputDecoration(labelText: 'Genre'),
-                validator: (value) => value!.isEmpty ? 'Enter genre' : null,
-              ),
-              TextFormField(
-                controller: _year,
-                decoration: const InputDecoration(labelText: 'Published Year'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Enter year' : null,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    _submitBook();
-                  }
-                },
-                child: const Text('Add Book'),
-              ),
-            ],
-          ),
+        padding: EdgeInsets.all(16),
+        child: ListView(
+          children: [
+            TextField(controller: _title, decoration: InputDecoration(labelText: 'Title')),
+            TextField(controller: _author, decoration: InputDecoration(labelText: 'Author')),
+            TextField(controller: _genre, decoration: InputDecoration(labelText: 'Genre')),
+            TextField(
+              controller: _year,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'Published Year'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: _pickImage,
+              icon: Icon(Icons.image),
+              label: Text("Pick Cover Image"),
+            ),
+            if (isImagePicked)
+              kIsWeb
+                  ? Image.memory(_webImage!, height: 150)
+                  : Image.file(_imageFile!, height: 150),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _submitBook,
+              child: Text("Submit"),
+            )
+          ],
         ),
       ),
     );

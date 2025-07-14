@@ -1,11 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const bookController = require('../controllers/bookController');
+const multer = require('multer');
+const {
+  createBook,
+  deleteBook,
+  getBooks,
+} = require('../controllers/bookController');
 
-router.get('/', bookController.getBooks);
-router.get('/:id', bookController.getBook);
-router.post('/', bookController.createBook);
-router.put('/:id', bookController.updateBook);
-router.delete('/:id', bookController.deleteBook);
+// GET all books
+router.get('/', getBooks);
+
+// POST new book
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './uploads');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage });
+
+router.post('/', upload.single('image'), createBook);
+
+// DELETE book
+router.delete('/:id', deleteBook);
 
 module.exports = router;

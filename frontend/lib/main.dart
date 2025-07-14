@@ -15,7 +15,7 @@ class BookListApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.teal,
       ),
-      home: const HomePage(),
+      home:  HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
