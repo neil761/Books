@@ -82,6 +82,15 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Row(
+                  children: [
+                    Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
                 // Book Image
                 Container(
                   height: 300,
@@ -137,17 +146,20 @@ class _HomePageState extends State<HomePage> {
                 
                 // Close Button
                 ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () async {
+                    await deleteBook(book['_id']);
+                    Navigator.of(context).pop();
+                  },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: Colors.red,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: Text(
-                    'Close',
+                    'Delete',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -287,20 +299,6 @@ class _HomePageState extends State<HomePage> {
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                              child: ElevatedButton.icon(
-                                onPressed: () => deleteBook(book['_id']),
-                                icon: Icon(Icons.delete, color: Colors.black),
-                                label: Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange,
-                                ),
                               ),
                             ),
                           ],
