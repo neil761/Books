@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as path;
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -43,7 +42,7 @@ class _AddBookPageState extends State<AddBookPage> {
   }
 
   Future<void> _submitBook() async {
-  final uri = Uri.parse('http://localhost:4000/api/books'); // Or http://10.0.2.2:4000 if on Android emulator
+  final uri = Uri.parse('http://localhost:4000/api/books'); 
 
   var request = http.MultipartRequest('POST', uri);
 
@@ -76,7 +75,7 @@ class _AddBookPageState extends State<AddBookPage> {
 
   if (response.statusCode == 201) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Book added successfully")));
-    Navigator.pop(context, true); // ✅ return true so HomePage refreshes
+    Navigator.pop(context, true); 
   } else {
     print('Error: ${response.statusCode}');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add book")));
@@ -90,24 +89,63 @@ class _AddBookPageState extends State<AddBookPage> {
     final isImagePicked = kIsWeb ? _webImage != null : _imageFile != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text("Add Book")),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
+        backgroundColor: Colors.black,
+        title: Text("Add Book",
+        style: TextStyle(
+          color: Colors.white
+        ),)),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: ListView(
           children: [
-            TextField(controller: _title, decoration: InputDecoration(labelText: 'Title')),
-            TextField(controller: _author, decoration: InputDecoration(labelText: 'Author')),
-            TextField(controller: _genre, decoration: InputDecoration(labelText: 'Genre')),
+            TextField(
+              controller: _title,
+              style: TextStyle(color: Colors.white), 
+              decoration: InputDecoration(
+                labelText: 'Title',
+                labelStyle: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextField(
+              controller: _author,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Author',
+                labelStyle: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextField(
+              controller: _genre,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Genre',
+                labelStyle: TextStyle(color: Colors.white),
+              ),
+            ),
             TextField(
               controller: _year,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: 'Published Year'),
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Published Year',
+                labelStyle: TextStyle(color: Colors.white),
+              ),
             ),
             SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: _pickImage,
-              icon: Icon(Icons.image),
-              label: Text("Pick Cover Image"),
+              icon: Icon(Icons.image, color: Colors.black,),
+              label: Text("Pick Cover Image",
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold
+              ),),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange
+            ),
             ),
             if (isImagePicked)
               kIsWeb
@@ -116,8 +154,15 @@ class _AddBookPageState extends State<AddBookPage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _submitBook,
-              child: Text("Submit"),
-            )
+              child: Text("+ Add Book",
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold
+              ),),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:  Colors.orange,
+              ),
+            ),
           ],
         ),
       ),

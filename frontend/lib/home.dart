@@ -12,7 +12,7 @@ class _HomePageState extends State<HomePage> {
   List books = [];
   List filteredBooks = [];
   final TextEditingController _searchController = TextEditingController();
-  final String baseUrl = 'http://localhost:4000'; // Use 10.0.2.2 if using Android emulator
+  final String baseUrl = 'http://localhost:4000'; 
 
   @override
   void initState() {
@@ -68,6 +68,124 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _showBookDetails(Map<String, dynamic> book) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.grey[900],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Book Image
+                Container(
+                  height: 300,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: book['image'] != null
+                        ? Image.network(
+                            '$baseUrl/uploads/${book['image']}',
+                            fit: BoxFit.fill,
+                          )
+                        : Container(
+                            color: Colors.grey,
+                            child: Icon(Icons.book, size: 80, color: Colors.white),
+                          ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                
+                // Book Title
+                Text(
+                  book['title'] ?? 'No Title',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 15),
+                
+                // Book Details
+                Container(
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildDetailRow('Author', book['author'] ?? 'Unknown'),
+                      SizedBox(height: 10),
+                      _buildDetailRow('Genre', book['genre'] ?? 'Unknown'),
+                      SizedBox(height: 10),
+                      _buildDetailRow('Published Year', book['publishedYear']?.toString() ?? 'Unknown'),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20),
+                
+                // Close Button
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    'Close',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label: ',
+          style: TextStyle(
+            color: Colors.orange,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,28 +199,10 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   margin: EdgeInsets.fromLTRB(20, 10, 5, 0),
                   child: Text(
-                    'Book',
+                    'Book List',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Container(
-                  alignment: Alignment.center,
-                  margin: EdgeInsets.fromLTRB(0, 10, 0, 0),
-                  width: 80,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    'List',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 27,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -154,11 +254,13 @@ class _HomePageState extends State<HomePage> {
                     ),
                     itemBuilder: (context, index) {
                       final book = filteredBooks[index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey[900],
-                        ),
+                      return GestureDetector(
+                        onTap: () => _showBookDetails(book),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.grey[900],
+                          ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -169,7 +271,7 @@ class _HomePageState extends State<HomePage> {
                                 child: book['image'] != null
                                     ? Image.network(
                                         '$baseUrl/uploads/${book['image']}',
-                                        fit: BoxFit.cover,
+                                        fit: BoxFit.fill,
                                       )
                                     : Container(
                                         color: Colors.grey,
@@ -191,26 +293,28 @@ class _HomePageState extends State<HomePage> {
                               padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                               child: ElevatedButton.icon(
                                 onPressed: () => deleteBook(book['_id']),
-                                icon: Icon(Icons.delete, color: Colors.white),
+                                icon: Icon(Icons.delete, color: Colors.black),
                                 label: Text(
                                   'Delete',
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(color: Colors.black),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red[500],
+                                  backgroundColor: Colors.orange,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                    );
+                  },
                   ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        backgroundColor: Colors.orange,
+        child: Icon(Icons.add, color: Colors.black,),
         onPressed: () async {
           final result = await Navigator.push(
             context,
